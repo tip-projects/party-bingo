@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Party Bingo 🎀</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 14px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #fff5f8;
+      color: #633d56;
+    }
+
+    .container {
+      max-width: 440px;
+      margin: auto;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #ffe0ed;
+      padding: 7px 13px;
+      border-radius: 20px;
+      font-size: 12px;
+      letter-spacing: 1px;
+    }
+
+    h1 {
+      font-size: 34px;
+      margin: 15px 0 8px;
+    }
+
+    p {
+      color: #98738c;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .bingo {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      margin: 22px 0 16px;
+    }
+
+    .cell {
+      min-width: 0;
+      aspect-ratio: 1 / 1;
+      padding: 3px;
+      border: 2px solid #f2c5d8;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #704b63;
+      font-size: clamp(9px, 2.7vw, 12px);
+      overflow-wrap: anywhere;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.15s;
+    }
+
+    .cell:active {
+      transform: scale(0.95);
+    }
+
+    .cell.marked {
+      background: #f6b5d0;
+      border-color: #e98eb5;
+      color: #633d56;
+    }
+
+    .cell.free {
+      background: #eadcff;
+      border-color: #cbb3ef;
+    }
+
+    .cell.free.marked {
+      background: #cbb3ef;
+    }
+
+    .bingo-button {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 14px;
+      background: #db79a5;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .secondary {
+      background: white;
+      color: #a45e83;
+      border: 2px solid #f2c5d8;
+    }
+
+    #message {
+      min-height: 28px;
+      font-size: 17px;
+      font-weight: bold;
+      color: #b34f83;
+    }
+
+    .footer {
+      font-size: 12px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <span class="tag">✿ PARTY GAME ✿</span>
+
+    <h1>Party Bingo 🎀</h1>
+    <p>Catch the moments. Mark your squares.<br>
+      Get five in a row to win!</p>
+
+    <div class="bingo" id="board"></div>
+
+    <p id="message" aria-live="polite">
+      Good luck, party people! 💗
+    </p>
+
+    <button class="bingo-button" onclick="newCard()">
+      🎲 Get a New Card
+    </button>
+
+    <button class="bingo-button secondary" onclick="shareGame()">
+      💌 Share with Friends
+    </button>
+
+    <p class="footer">
+      Made with love & confetti ✨
+    </p>
+  </main>
+
+  <script>
+    const prompts = [
+      "Takes a selfie",
+      "Someone says OMG",
+      "Group photo time",
+      "Plays a party song",
+      "Someone is late",
+      "Tells a funny story",
+      "Someone dances",
+      "Spills a drink",
+      "Says 'one more song'",
+      "Sings out loud",
+      "Makes a new friend",
+      "Someone laughs hard",
+      "Takes a food pic",
+      "Forgets someone's name",
+      "Says 'cheers!'",
+      "Someone tells gossip",
+      "Makes a TikTok",
+      "Loses their phone",
+      "Compliments an outfit",
+      "Requests a song",
+      "Someone trips a little",
+      "Starts a group chant",
+      "Talks about an ex",
+      "Says 'I'm so tired'"
+    ];
+
+    const board = document.getElementById("board");
+    const message = document.getElementById("message");
+    let cells = [];
+
+    function shuffle(array) {
+      const result = [...array];
+
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+
+      return result;
+    }
+
+    function newCard() {
+      board.innerHTML = "";
+      cells = [];
+
+      const shuffled = shuffle(prompts);
+
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("button");
+        cell.className = "cell";
+        cell.type = "button";
+
+        if (i === 12) {
+          cell.textContent = "FREE ⭐";
+          cell.classList.add("free", "marked");
+          cell.setAttribute("aria-pressed", "true");
+        } else {
+          const promptIndex = i < 12 ? i : i - 1;
+          cell.textContent = shuffled[promptIndex];
+          cell.setAttribute("aria-pressed", "false");
+        }
+
+        cell.addEventListener("click", () => {
+          if (i === 12) return;
+
+          cell.classList.toggle("marked");
+
+          cell.setAttribute(
+            "aria-pressed",
+            cell.classList.contains("marked") ? "true" : "false"
+          );
+
+          checkBingo();
+        });
+
+        board.appendChild(cell);
+        cells.push(cell);
+      }
+
+      message.textContent = "Good luck, party people! 💗";
+    }
+
+    function checkBingo() {
+      const lines = [];
+
+      for (let i = 0; i < 5; i++) {
+        lines.push(
+          [0, 1, 2, 3, 4].map(j => i * 5 + j),
+          [0, 1, 2, 3, 4].map(j => j * 5 + i)
+        );
+      }
+
+      lines.push(
+        [0, 6, 12, 18, 24],
+        [4, 8, 12, 16, 20]
+      );
+
+      const won = lines.some(line =>
+        line.every(i => cells[i].classList.contains("marked"))
+      );
+
+      message.textContent = won
+        ? "🎉 BINGO! YOU DID IT! 💗"
+        : "Keep going! You got this ✨";
+    }
+
+    function shareGame() {
+      if (navigator.share) {
+        navigator.share({
+          title: "Party Bingo 🎀",
+          text: "Come play Party Bingo with me!",
+          url: window.location.href
+        }).catch(() => {});
+      } else {
+        message.textContent =
+          "Copy this page's link and send it to your friends! 💌";
+      }
+    }
+
+    newCard();
+  </script>
+</body>
+</html>
